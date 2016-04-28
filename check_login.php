@@ -28,6 +28,7 @@ if (isset($users[$enteredEmail]) && $users[$enteredEmail]['password'] === $enter
     // login successful, redirect to welcome page
     $_SESSION['loggedIn'] = true;
     $_SESSION['name'] = $users[$enteredEmail]['name'];
+    $_SESSION['email'] = $enteredEmail;
     header("Location: welcome.php");
     exit;
 }

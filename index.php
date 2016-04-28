@@ -6,6 +6,9 @@
         header("Location: welcome.php");
         exit;
     }
+    $clientId = '2e580e970def5a1dd362';
+    $scopes = 'user:email';
+    $githubAuthorizationEndpoint = "https://github.com/login/oauth/authorize?client_id={$clientId}&scope={$scopes}"
 ?>
 <!DOCTYPE html>
 <html>
@@ -42,5 +45,7 @@
                 <input type="submit" name="loginButton" value="login" id="loginButton">
             </p>
         </form>
+        <h3>OR</h3>
+        <a href="<?php echo $githubAuthorizationEndpoint ?>" id="github-login">Login with Github</a>
     </body>
 </html>

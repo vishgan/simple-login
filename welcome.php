@@ -16,6 +16,7 @@
     <body>
         <h1>Welcome <?php echo $name; ?></h1>
         <form action="check_logout.php" method="post">
+        <h3>Email Id: <?php echo $_SESSION['email']; ?></h3>
             <p>
                 <input type="submit" name="logoutButton" value="logout">
             </p>
