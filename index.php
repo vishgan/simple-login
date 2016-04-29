@@ -30,6 +30,12 @@
                     case 'notLoggedIn':
                         $errorMsg = "User not logged in";
                         break;
+                    case 'badAccessTokenResponse':
+                        $errorMsg = "Bad response from access token endpoint";
+                        break;
+                    case 'noAccessToken':
+                        $errorMsg = "No access token exchanged";
+                        break;
                 }
                 if (isset($errorMsg)) {
                     echo '<font color="red">Error: ' . $errorMsg . "</font>";

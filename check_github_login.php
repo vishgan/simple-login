@@ -6,19 +6,23 @@ if (!isset($_GET['code'])) {
 }
 
 session_start();
+
+// already logged in to amlrocks
 if (isset($_SESSION['loggedIn']) && $_SESSION['loggedIn']) {
-    // already logged in to amlrocks
     header("Location: welcome.php");
     exit;
 }
 
-$authorizatioCode = $_GET['code'];
-
 $accessTokenEndpoint = 'https://github.com/login/oauth/access_token';
+$clientId = '2e580e970def5a1dd362';
+$clientSecret = '4cc60cf70175a370761055979e971aef8f544f27';
+
+$authorizationCode = $_GET['code'];
+
 $postData = array(
-    'client_id' => '2e580e970def5a1dd362',
-    'client_secret' => '4cc60cf70175a370761055979e971aef8f544f27',
-    'code' => $authorizatioCode,
+    'client_id' => $clientId,
+    'client_secret' => $clientSecret,
+    'code' => $authorizationCode,
 );
 
 $headers = array(
@@ -32,21 +36,29 @@ curl_setopt($curl, CURLOPT_POST, 1);
 curl_setopt($curl, CURLOPT_POSTFIELDS, $postData);
 curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
 
-// curl_setopt($curl, CURLOPT_PROXY, 'http://10.0.2.2:8888');
-// curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-
 $response = curl_exec($curl);
 
-// check for status codes
-// other than 200, you might get 401
-// github returns 200 without access token if same authorization code is used
-curl_close($curl);
-
 $accessTokenData = json_decode($response, true);
+// github returns 200 without access token if same authorization code is used
+if (isset($accessTokenData['error'])) {
+    header('Location: index.php?problem=badAccessTokenResponse');
+    exit;
+}
 $accessToken = $accessTokenData['access_token'];
 $accessTokenScopes = $accessTokenData['scope'];
+if ($accessTokenScopes !== 'user:email') {
+    header('Location: index.php?problem=insufficientPermissions');
+    exit;
+}
+
+curl_close($curl);
+
+// Great, now I have an "acess" token to play with the github api
+// check permissions this token has, can be expired, revoked
+// Still, don't know if user is authenticated
 
 // user authentication endpoint, part of github resource api
+$userAuthenticationEndpoint = 'https://api.github.com/user';
 $headers = array(
     'Accept: application/json',
     "Authorization: Token {$accessToken}",
@@ -54,22 +66,18 @@ $headers = array(
 );
 
 $curl = curl_init();
-curl_setopt($curl, CURLOPT_URL, 'https://api.github.com/user');
+curl_setopt($curl, CURLOPT_URL, $userAuthenticationEndpoint);
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
 
-// curl_setopt($curl, CURLOPT_PROXY, 'http://10.0.2.2:8888');
-// curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-
 $response = curl_exec($curl);
-$userData = json_decode($response, true);
-// returns 401 if no user agent is given
 
-// now apparently we know user is authenticated by github
+// now we know user is authenticated by github
+$userData = json_decode($response, true);
 $_SESSION['loggedIn'] = true;
 $_SESSION['name'] = $userData['login'];
+
 // lets find out user's email address
-// you should also check scope of access token
 
 $headers = array(
     'Accept: application/json',
@@ -81,9 +89,6 @@ $curl = curl_init();
 curl_setopt($curl, CURLOPT_URL, 'https://api.github.com/user/emails');
 curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
-
-// curl_setopt($curl, CURLOPT_PROXY, 'http://10.0.2.2:8888');
-// curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
 
 $response = curl_exec($curl);
 
